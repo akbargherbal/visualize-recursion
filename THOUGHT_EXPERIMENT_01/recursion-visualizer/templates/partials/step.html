@@ -1,0 +1,190 @@
+<!-- This partial is swapped in by HTMX on each step navigation -->
+
+<!-- Four-Pane Layout -->
+<div class="grid grid-cols-2 gap-6">
+    
+    <!-- TOP LEFT: Code View -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">📝 Algorithm Code</h2>
+        
+        <div class="bg-gray-900 text-gray-100 rounded-lg p-4 overflow-x-auto">
+            {% set lines = source_code.split('\n') %}
+            {% set current_line = step_data.get('code_line', 0) %}
+            
+            {% for line in lines %}
+            <div class="code-line {% if loop.index == current_line %}code-line-highlighted{% endif %}">
+                <span class="code-line-number">{{ loop.index }}</span>{{ line }}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="mt-4 text-sm text-gray-600">
+            {% if step_data.get('code_line') %}
+            <span class="inline-block bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                → Line {{ step_data.code_line }}
+            </span>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- TOP RIGHT: Timeline Visualization -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">📊 Interval Timeline</h2>
+        
+        {% if step_data.intervals_state %}
+        <div class="space-y-3">
+            {% for item in step_data.intervals_state %}
+            {% set interval = item.interval %}
+            {% set status = item.status %}
+            
+            <div class="flex items-center gap-2">
+                <!-- Interval label -->
+                <div class="w-24 text-sm font-mono text-gray-600">
+                    {{ interval }}
+                </div>
+                
+                <!-- Visual bar -->
+                <div class="flex-1 relative h-8">
+                    <div 
+                        class="interval-bar interval-{{ status }}"
+                        style="
+                            position: absolute;
+                            left: {{ (interval[0] / 10) }}%;
+                            width: {{ ((interval[1] - interval[0]) / 10) }}%;
+                            opacity: {{ item.opacity }};
+                        "
+                    >
+                        {{ interval[1] - interval[0] }}
+                    </div>
+                </div>
+                
+                <!-- Status badge -->
+                <div class="w-20 text-xs">
+                    {% if status == 'kept' %}
+                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded">Kept</span>
+                    {% elif status == 'examining' %}
+                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">Active</span>
+                    {% elif status == 'covered' %}
+                    <span class="bg-red-100 text-red-800 px-2 py-1 rounded">Covered</span>
+                    {% elif status == 'removed' %}
+                    <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded">Removed</span>
+                    {% else %}
+                    <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded">Pending</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Timeline axis -->
+        <div class="mt-6 pt-4 border-t border-gray-200">
+            <div class="flex justify-between text-xs text-gray-500">
+                <span>0</span>
+                <span>250</span>
+                <span>500</span>
+                <span>750</span>
+                <span>1000</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-gray-500 text-center py-8">
+            No intervals to display
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- BOTTOM LEFT: Variables Panel -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">🔧 Variables</h2>
+        
+        <div class="space-y-3">
+            {% if step_data.variables %}
+                {% for key, value in step_data.variables.items() %}
+                <div class="border-l-4 border-blue-500 pl-3 py-2">
+                    <div class="text-sm font-semibold text-gray-700">{{ key }}</div>
+                    <div class="text-sm font-mono text-gray-900 mt-1">
+                        {% if value is sequence and value is not string %}
+                            {% if value|length > 3 %}
+                                [{{ value[:3]|join(', ') }}, ... ({{ value|length }} items)]
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        {% else %}
+                            {{ value }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-gray-500 text-center py-4">
+                    No variables at this step
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Current phase badge -->
+        <div class="mt-4 pt-4 border-t border-gray-200">
+            <span class="inline-block bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-semibold">
+                Phase: {{ step_data.phase|replace('_', ' ')|title }}
+            </span>
+        </div>
+    </div>
+    
+    <!-- BOTTOM RIGHT: Call Stack -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">📞 Call Stack</h2>
+        
+        {% if step_data.call_stack %}
+        <div class="space-y-2">
+            {% for call in step_data.call_stack %}
+            <div class="call-stack-item {% if loop.last %}call-stack-current{% endif %}">
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500">{{ loop.index }}.</span>
+                    <span class="flex-1">{{ call }}</span>
+                    {% if loop.last %}
+                    <span class="text-xs bg-blue-600 text-white px-2 py-1 rounded">YOU ARE HERE</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-600">
+            <strong>Depth:</strong> {{ step_data.get('depth', 0) }} | 
+            <strong>Stack size:</strong> {{ step_data.call_stack|length }}
+        </div>
+        {% else %}
+        <div class="text-gray-500 text-center py-8">
+            No active calls
+        </div>
+        {% endif %}
+    </div>
+    
+</div>
+
+<!-- Explanation Box (spans full width below) -->
+<div class="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-sm border border-blue-200 p-6">
+    <h2 class="text-xl font-bold text-gray-900 mb-3">💡 What's Happening</h2>
+    
+    <div class="space-y-3">
+        <!-- Action -->
+        <div>
+            <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded text-sm font-semibold mb-2">
+                {{ step_data.action }}
+            </span>
+        </div>
+        
+        <!-- Explanation -->
+        <p class="text-gray-700 leading-relaxed text-lg">
+            {{ step_data.explanation }}
+        </p>
+        
+        <!-- Result (if present) -->
+        {% if step_data.result is not none %}
+        <div class="mt-4 pt-4 border-t border-blue-200">
+            <strong class="text-gray-900">Result:</strong>
+            <code class="ml-2 bg-white px-3 py-1 rounded text-sm">{{ step_data.result }}</code>
+        </div>
+        {% endif %}
+    </div>
+</div>

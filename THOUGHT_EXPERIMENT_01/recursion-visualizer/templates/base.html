@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Recursion Visualizer{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom styles -->
+    <style>
+        /* Code highlighting styles */
+        .code-line {
+            padding: 0.25rem 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+        
+        .code-line-highlighted {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            font-weight: 600;
+        }
+        
+        .code-line-number {
+            display: inline-block;
+            width: 2rem;
+            text-align: right;
+            color: #9ca3af;
+            margin-right: 1rem;
+            user-select: none;
+        }
+        
+        /* Timeline interval styles */
+        .interval-bar {
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .interval-kept {
+            background-color: #10b981;
+        }
+        
+        .interval-examining {
+            background-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        
+        .interval-covered {
+            background-color: #ef4444;
+            text-decoration: line-through;
+        }
+        
+        .interval-pending {
+            background-color: #6b7280;
+        }
+        
+        .interval-removed {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+        }
+        
+        /* Call stack styles */
+        .call-stack-item {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background-color: #f3f4f6;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .call-stack-current {
+            background-color: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            font-weight: 600;
+        }
+        
+        /* Smooth transitions for HTMX swaps */
+        .htmx-swapping {
+            opacity: 0;
+            transition: opacity 200ms ease-out;
+        }
+        
+        .htmx-settling {
+            opacity: 1;
+            transition: opacity 200ms ease-in;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <a href="/" class="text-2xl font-bold text-gray-900 hover:text-blue-600 transition">
+                        🔄 Recursion Visualizer
+                    </a>
+                </div>
+                <nav class="flex gap-4">
+                    <a href="/" class="text-gray-600 hover:text-gray-900 transition">Home</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 transition">About</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600 text-sm">
+            Built with Flask, HTMX, and Alpine.js | 
+            <a href="https://github.com" class="text-blue-600 hover:underline">View on GitHub</a>
+        </div>
+    </footer>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

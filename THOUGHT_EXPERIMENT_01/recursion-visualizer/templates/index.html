@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-12">
+    
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold text-gray-900 mb-4">
+            🔄 Recursion Visualizer
+        </h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+            Step through recursive algorithms and see exactly what happens at each function call.
+            Watch the call stack grow, variables change, and decisions unfold.
+        </p>
+    </div>
+    
+    <!-- Features -->
+    <div class="grid grid-cols-3 gap-6 mb-12">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+            <div class="text-4xl mb-3">📝</div>
+            <h3 class="font-bold text-gray-900 mb-2">Line-by-Line Code</h3>
+            <p class="text-sm text-gray-600">Follow execution with highlighted code</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+            <div class="text-4xl mb-3">📊</div>
+            <h3 class="font-bold text-gray-900 mb-2">Problem-Specific Views</h3>
+            <p class="text-sm text-gray-600">Visual representations that make sense</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+            <div class="text-4xl mb-3">📞</div>
+            <h3 class="font-bold text-gray-900 mb-2">Call Stack Tracking</h3>
+            <p class="text-sm text-gray-600">See recursion depth in real-time</p>
+        </div>
+    </div>
+    
+    <!-- Algorithm List -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-6">Available Algorithms</h2>
+        
+        <div class="space-y-4">
+            {% for algo in algorithms %}
+            <a href="/problem/{{ algo.id }}" 
+               class="block p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition">
+                            {{ algo.name }}
+                        </h3>
+                        <p class="text-gray-600 mt-1">{{ algo.description }}</p>
+                        <div class="flex gap-3 mt-3">
+                            <span class="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm">
+                                {{ algo.category }}
+                            </span>
+                            <span class="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm">
+                                {{ algo.difficulty }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="text-4xl ml-6 group-hover:scale-110 transition">
+                        →
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        
+        <!-- Coming Soon -->
+        <div class="mt-8 pt-8 border-t border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Coming Soon:</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-gray-50 rounded-lg text-gray-500">
+                    <div class="font-semibold">🌳 Tree Traversals</div>
+                    <div class="text-sm">Inorder, Preorder, Postorder</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg text-gray-500">
+                    <div class="font-semibold">🔀 Merge Sort</div>
+                    <div class="text-sm">Divide and conquer visualization</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg text-gray-500">
+                    <div class="font-semibold">♟️ N-Queens</div>
+                    <div class="text-sm">Backtracking on a chessboard</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg text-gray-500">
+                    <div class="font-semibold">🎯 Subset Sum</div>
+                    <div class="text-sm">Dynamic programming approach</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Start Guide -->
+    <div class="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">🚀 How to Use</h2>
+        <ol class="space-y-3 text-gray-700">
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</span>
+                <span>Choose an algorithm from the list above</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">2</span>
+                <span>Use <strong>Next/Previous</strong> buttons or <strong>arrow keys</strong> to step through execution</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">3</span>
+                <span>Watch the code highlight, visualization update, and call stack grow</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">4</span>
+                <span>Read the explanation box to understand each decision point</span>
+            </li>
+        </ol>
+    </div>
+    
+</div>
+{% endblock %}
