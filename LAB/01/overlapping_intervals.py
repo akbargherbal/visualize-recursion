@@ -36,31 +36,31 @@ def remove_covered_optimized(intervals):
     sorted_intervals = sorted(intervals, key=lambda x: (x[0], -x[1]))
 
     @trace_recursion  # Add this line
-    def filter_covered(intervals, max_end_so_far):
-        """
-        Filter covered intervals recursively.
+    def filter_covered(intervals, max_end_so_far, depth=0):
+        indent = "  " * depth
+        print(
+            f"{indent}→ filter_covered({len(intervals)} intervals, max_end={max_end_so_far})"
+        )
 
-        Args:
-            intervals: Remaining intervals to process (sorted)
-            max_end_so_far: Maximum end time seen so far
-
-        Returns:
-            List of non-covered intervals
-        """
         if not intervals:
+            print(f"{indent}  BASE CASE: return []")
             return []
 
         first = intervals[0]
         rest = intervals[1:]
 
-        # If first's end is <= max_end_so_far, it's covered
+        print(f"{indent}  Current interval: {first}")
+
         if first[1] <= max_end_so_far:
-            # Skip this interval
-            return filter_covered(rest, max_end_so_far)
+            print(f"{indent}  ✗ SKIP: {first} covered by max_end={max_end_so_far}")
+            result = filter_covered(rest, max_end_so_far, depth + 1)
         else:
-            # Keep this interval and update max_end
             new_max_end = max(max_end_so_far, first[1])
-            return [first] + filter_covered(rest, new_max_end)
+            print(f"{indent}  ✓ KEEP: {first}, update max_end to {new_max_end}")
+            result = [first] + filter_covered(rest, new_max_end, depth + 1)
+
+        print(f"{indent}← return {result}")
+        return result
 
     return filter_covered(sorted_intervals, float("-inf"))
 
