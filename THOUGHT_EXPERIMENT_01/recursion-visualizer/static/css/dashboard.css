@@ -1,0 +1,375 @@
+/**
+ * Dashboard Style CSS for Recursion Visualizer
+ * Clean, card-based layout with modern aesthetics
+ */
+
+/* ============================================================================
+   CARD COMPONENTS
+   ============================================================================ */
+
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ============================================================================
+   INTERVAL VISUALIZATION
+   ============================================================================ */
+
+.interval-bar {
+    height: 40px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+    font-size: 0.875rem;
+    transition: all 0.3s ease;
+    position: absolute;
+}
+
+.interval-kept {
+    background: #10b981;
+    border: 2px solid #059669;
+}
+
+.interval-examining {
+    background: #3b82f6;
+    border: 3px solid #2563eb;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    animation: pulse-examining 2s infinite;
+}
+
+.interval-covered {
+    background: #ef4444;
+    border: 2px solid #dc2626;
+    opacity: 0.6;
+}
+
+.interval-pending {
+    background: #9ca3af;
+    border: 1px solid #6b7280;
+}
+
+.interval-removed {
+    background: #e5e7eb;
+    color: #9ca3af;
+    border: 1px solid #d1d5db;
+    text-decoration: line-through;
+}
+
+@keyframes pulse-examining {
+    0%, 100% {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+    }
+}
+
+/* ============================================================================
+   CODE VIEW
+   ============================================================================ */
+
+.code-container {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 0.75rem;
+    overflow-x: auto;
+    font-family: 'Courier New', Monaco, monospace;
+}
+
+.code-line {
+    padding: 0.2rem 0.75rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: #6b7280;
+}
+
+.code-line-active {
+    background: #fef3c7;
+    border-left: 3px solid #f59e0b;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   BADGES & STATUS INDICATORS
+   ============================================================================ */
+
+.badge {
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.badge-kept {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.badge-examining {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 2px solid #3b82f6;
+    animation: pulse-badge 2s infinite;
+}
+
+.badge-covered {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+.badge-pending {
+    background: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+}
+
+@keyframes pulse-badge {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* ============================================================================
+   VARIABLES & CALL STACK
+   ============================================================================ */
+
+.variable-item {
+    background: white;
+    border-radius: 6px;
+    padding: 0.5rem;
+    border: 1px solid #e5e7eb;
+}
+
+.variable-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.variable-value {
+    font-family: 'Courier New', Monaco, monospace;
+    color: #1f2937;
+    font-size: 0.875rem;
+}
+
+.stack-item {
+    background: #f9fafb;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-family: 'Courier New', Monaco, monospace;
+    font-size: 0.75rem;
+    border-left: 3px solid #d1d5db;
+}
+
+.stack-item-active {
+    background: #dbeafe;
+    border-left-color: #3b82f6;
+    font-weight: 600;
+}
+
+/* ============================================================================
+   STATS PANELS
+   ============================================================================ */
+
+.stat-box {
+    padding: 0.75rem;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-blue {
+    background: #dbeafe;
+    color: #1e3a8a;
+}
+
+.stat-green {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.stat-red {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.stat-purple {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+/* ============================================================================
+   NAVIGATION & CONTROLS
+   ============================================================================ */
+
+.nav-button {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.nav-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.nav-button-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.nav-button-primary:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.nav-button-success {
+    background: #10b981;
+    color: white;
+}
+
+.nav-button-success:hover:not(:disabled) {
+    background: #059669;
+}
+
+.nav-button-secondary {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.nav-button-secondary:hover:not(:disabled) {
+    background: #d1d5db;
+}
+
+/* ============================================================================
+   PROGRESS BAR
+   ============================================================================ */
+
+.progress-bar {
+    width: 100%;
+    height: 0.5rem;
+    background: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #10b981 100%);
+    transition: width 0.3s ease;
+    border-radius: 9999px;
+}
+
+/* ============================================================================
+   EXPLANATION CARD
+   ============================================================================ */
+
+.explanation-card {
+    border-left: 4px solid #3b82f6;
+}
+
+.explanation-badge {
+    display: inline-block;
+    background: #3b82f6;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.explanation-decision {
+    background: #dbeafe;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.explanation-decision-label {
+    font-size: 0.75rem;
+    color: #1e40af;
+    font-weight: 600;
+}
+
+.explanation-decision-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e3a8a;
+}
+
+/* ============================================================================
+   HTMX TRANSITIONS
+   ============================================================================ */
+
+.htmx-swapping {
+    opacity: 0;
+    transition: opacity 150ms ease-out;
+}
+
+.htmx-settling {
+    opacity: 1;
+    transition: opacity 150ms ease-in;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 1024px) {
+    .card-header {
+        font-size: 1rem;
+    }
+    
+    .code-line {
+        font-size: 0.75rem;
+    }
+    
+    .interval-bar {
+        height: 32px;
+        font-size: 0.75rem;
+    }
+}

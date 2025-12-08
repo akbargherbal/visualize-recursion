@@ -3,94 +3,113 @@
 {% block title %}{{ algorithm_name }} - Recursion Visualizer{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 py-6" x-data="{ 
+<div class="max-w-[1600px] mx-auto px-6 py-6" x-data="{ 
     currentStep: {{ current_step }},
     totalSteps: {{ total_steps }}
 }">
     
-    <!-- Algorithm Header -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ algorithm_name }}</h1>
-        <p class="text-gray-600">Step-by-step visualization of recursive execution</p>
+    <!-- Header: Algorithm Info + Metadata -->
+    <div class="card p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-1">{{ algorithm_name }}</h1>
+                <p class="text-gray-600 text-sm">Step-by-step visualization of recursive execution</p>
+            </div>
+            <div class="text-right">
+                <div class="text-4xl font-bold text-gray-900">
+                    <span x-text="currentStep + 1"></span>
+                    <span class="text-2xl text-gray-400">/</span>
+                    <span class="text-gray-600" x-text="totalSteps"></span>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">Current Step</div>
+            </div>
+        </div>
         
-        <!-- Metadata -->
-        <div class="grid grid-cols-4 gap-4 mt-4 text-sm">
-            <div class="bg-blue-50 rounded p-3">
-                <div class="text-blue-900 font-semibold">Total Steps</div>
-                <div class="text-2xl font-bold text-blue-600">{{ metadata.total_steps }}</div>
+        <!-- Metadata Stats -->
+        <div class="grid grid-cols-4 gap-3">
+            <div class="stat-box stat-blue">
+                <div class="stat-label">Total Steps</div>
+                <div class="stat-value">{{ metadata.total_steps }}</div>
             </div>
-            <div class="bg-green-50 rounded p-3">
-                <div class="text-green-900 font-semibold">Max Depth</div>
-                <div class="text-2xl font-bold text-green-600">{{ metadata.max_recursion_depth }}</div>
+            <div class="stat-box stat-green">
+                <div class="stat-label">Max Depth</div>
+                <div class="stat-value">{{ metadata.max_recursion_depth }}</div>
             </div>
-            <div class="bg-purple-50 rounded p-3">
-                <div class="text-purple-900 font-semibold">Recursive Calls</div>
-                <div class="text-2xl font-bold text-purple-600">{{ metadata.total_recursive_calls }}</div>
+            <div class="stat-box stat-purple">
+                <div class="stat-label">Recursive Calls</div>
+                <div class="stat-value">{{ metadata.total_recursive_calls }}</div>
             </div>
-            <div class="bg-orange-50 rounded p-3">
-                <div class="text-orange-900 font-semibold">Removed</div>
-                <div class="text-2xl font-bold text-orange-600">{{ metadata.removed_intervals }}</div>
+            <div class="stat-box stat-red">
+                <div class="stat-label">Removed</div>
+                <div class="stat-value">{{ metadata.removed_intervals }}</div>
             </div>
         </div>
     </div>
     
     <!-- Navigation Controls -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
-        <div class="flex items-center justify-between">
-            <div class="flex gap-2">
-                <button 
-                    hx-get="/problem/{{ algorithm_id }}/step/{{ current_step - 1 }}"
-                    hx-target="#visualization-container"
-                    hx-swap="innerHTML swap:200ms"
-                    hx-push-url="true"
-                    :disabled="currentStep === 0"
-                    @click="currentStep = Math.max(0, currentStep - 1)"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
-                    x-bind:class="currentStep === 0 ? 'opacity-50' : ''"
-                >
-                    ◀ Previous
-                </button>
-                
-                <button 
-                    hx-get="/problem/{{ algorithm_id }}/step/{{ current_step + 1 }}"
-                    hx-target="#visualization-container"
-                    hx-swap="innerHTML swap:200ms"
-                    hx-push-url="true"
-                    :disabled="currentStep === totalSteps - 1"
-                    @click="currentStep = Math.min(totalSteps - 1, currentStep + 1)"
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
-                    x-bind:class="currentStep === totalSteps - 1 ? 'opacity-50' : ''"
-                >
-                    Next ▶
-                </button>
-                
-                <button 
-                    hx-get="/problem/{{ algorithm_id }}/step/0"
-                    hx-target="#visualization-container"
-                    hx-swap="innerHTML swap:200ms"
-                    hx-push-url="true"
-                    @click="currentStep = 0"
-                    class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition"
-                >
-                    ⟲ Reset
-                </button>
-            </div>
+    <div class="card p-5 mb-6">
+        <div class="flex items-center justify-center gap-4 mb-4">
+            <!-- Previous Button -->
+            <button 
+                hx-get="/problem/{{ algorithm_id }}/step/{{ current_step - 1 }}"
+                hx-target="#visualization-container"
+                hx-swap="innerHTML swap:200ms"
+                hx-push-url="true"
+                :disabled="currentStep === 0"
+                @click="currentStep = Math.max(0, currentStep - 1)"
+                class="nav-button nav-button-primary"
+                :class="currentStep === 0 ? 'opacity-50' : ''"
+            >
+                ◀ Previous
+            </button>
             
-            <div class="text-lg font-semibold text-gray-700">
-                Step <span x-text="currentStep + 1"></span> / <span x-text="totalSteps"></span>
-            </div>
+            <!-- Reset Button -->
+            <button 
+                hx-get="/problem/{{ algorithm_id }}/step/0"
+                hx-target="#visualization-container"
+                hx-swap="innerHTML swap:200ms"
+                hx-push-url="true"
+                @click="currentStep = 0"
+                class="nav-button nav-button-secondary"
+            >
+                ⟲ Reset
+            </button>
             
-            <div class="text-sm text-gray-500">
-                Use ← → arrow keys to navigate
+            <!-- Next Button -->
+            <button 
+                hx-get="/problem/{{ algorithm_id }}/step/{{ current_step + 1 }}"
+                hx-target="#visualization-container"
+                hx-swap="innerHTML swap:200ms"
+                hx-push-url="true"
+                :disabled="currentStep === totalSteps - 1"
+                @click="currentStep = Math.min(totalSteps - 1, currentStep + 1)"
+                class="nav-button nav-button-success"
+                :class="currentStep === totalSteps - 1 ? 'opacity-50' : ''"
+            >
+                Next ▶
+            </button>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="flex items-center gap-4">
+            <div class="flex-1 progress-bar">
+                <div 
+                    class="progress-fill"
+                    :style="`width: ${((currentStep + 1) / totalSteps) * 100}%`"
+                ></div>
+            </div>
+            <div class="text-sm font-semibold text-gray-600 whitespace-nowrap">
+                <span x-text="Math.round(((currentStep + 1) / totalSteps) * 100)"></span>% Complete
             </div>
         </div>
         
-        <!-- Progress bar -->
-        <div class="mt-4 bg-gray-200 rounded-full h-2 overflow-hidden">
-            <div 
-                class="bg-blue-600 h-full transition-all duration-300"
-                :style="`width: ${((currentStep + 1) / totalSteps) * 100}%`"
-            ></div>
+        <!-- Keyboard Hint -->
+        <div class="text-center mt-3">
+            <div class="inline-flex items-center gap-2 text-xs text-gray-500">
+                <span class="font-mono bg-gray-100 px-2 py-1 rounded border border-gray-300">←</span>
+                <span class="font-mono bg-gray-100 px-2 py-1 rounded border border-gray-300">→</span>
+                <span>Use arrow keys to navigate</span>
+            </div>
         </div>
     </div>
     
@@ -106,11 +125,27 @@
 <script>
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft') {
-            document.querySelector('button[hx-get*="step/' + (parseInt('{{ current_step }}') - 1) + '"]')?.click();
-        } else if (e.key === 'ArrowRight') {
-            document.querySelector('button[hx-get*="step/' + (parseInt('{{ current_step }}') + 1) + '"]')?.click();
+        // Prevent default arrow key behavior (page scrolling)
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
         }
+        
+        if (e.key === 'ArrowLeft') {
+            const prevBtn = document.querySelector('button[hx-get*="step/' + (parseInt('{{ current_step }}') - 1) + '"]');
+            if (prevBtn && !prevBtn.disabled) {
+                prevBtn.click();
+            }
+        } else if (e.key === 'ArrowRight') {
+            const nextBtn = document.querySelector('button[hx-get*="step/' + (parseInt('{{ current_step }}') + 1) + '"]');
+            if (nextBtn && !nextBtn.disabled) {
+                nextBtn.click();
+            }
+        }
+    });
+    
+    // Smooth scroll to top on navigation
+    document.body.addEventListener('htmx:afterSwap', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 </script>
 {% endblock %}

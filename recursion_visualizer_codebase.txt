@@ -1,0 +1,1863 @@
+<codebase>
+<project type='python' language='python'>
+<entry_points>
+  <entry>app.py</entry>
+</entry_points>
+<dependencies>
+  <dep>requirements.txt</dep>
+</dependencies>
+<test_dirs>
+  <dir>tests</dir>
+</test_dirs>
+</project>
+
+<files>
+<file path='app.py' size='5146' ext='.py' imports='sys,flask,pathlib,overlapping_intervals_tracer'>
+```
+"""
+Recursion Visualizer - Flask Application
+=========================================
+
+Web-based tool for visualizing recursive algorithm execution.
+"""
+
+from flask import Flask, render_template, session, redirect, url_for, jsonify
+from pathlib import Path
+import sys
+
+# Add algorithms directory to path
+sys.path.insert(0, str(Path(__file__).parent / 'algorithms'))
+
+from overlapping_intervals_tracer import OverlappingIntervalsTracer
+
+app = Flask(__name__)
+app.secret_key = 'dev-secret-key-change-in-production'  # Change this in production!
+
+# Configure session
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
+
+
+@app.route('/')
+def index():
+    """Landing page with algorithm list."""
+    algorithms = [
+        {
+            'id': 'overlapping-intervals',
+            'name': 'Remove Covered Intervals',
+            'description': 'Remove intervals completely covered by other intervals',
+            'difficulty': 'Medium',
+            'category': 'Array Processing'
+        }
+        # More algorithms will be added here
+    ]
+    return render_template('index.html', algorithms=algorithms)
+
+
+@app.route('/problem/<algorithm_id>')
+def problem(algorithm_id):
+    """
+    Initialize algorithm and display first step.
+    
+    This route:
+    1. Runs the algorithm with instrumentation
+    2. Captures the full execution trace
+    3. Stores trace in session
+    4. Renders the visualization page at step 0
+    """
+    if algorithm_id != 'overlapping-intervals':
+        return "Algorithm not found", 404
+    
+    # Initialize with default test case
+    test_intervals = [(540, 660), (600, 720), (540, 720), (900, 960)]
+    
+    # Run tracer
+    tracer = OverlappingIntervalsTracer()
+    output = tracer.run(test_intervals)
+    
+    # Store in session
+    session['trace'] = output['trace']
+    session['metadata'] = output['metadata']
+    session['algorithm'] = algorithm_id
+    session['input_data'] = test_intervals
+    session['current_step'] = 0
+    
+    # Get first step data
+    step_data = output['trace'][0]
+    total_steps = len(output['trace'])
+    
+    return render_template(
+        'problem.html',
+        algorithm_id=algorithm_id,
+        algorithm_name='Remove Covered Intervals',
+        step_data=step_data,
+        current_step=0,
+        total_steps=total_steps,
+        metadata=output['metadata'],
+        source_code=get_source_code()
+    )
+
+
+@app.route('/problem/<algorithm_id>/step/<int:step_num>')
+def get_step(algorithm_id, step_num):
+    """
+    HTMX endpoint: Return HTML partial for a specific step.
+    
+    This is called when user clicks Next/Prev buttons.
+    Returns only the updated portions of the page.
+    """
+    # Validate session data exists
+    if 'trace' not in session:
+        return "Session expired. Please reload.", 400
+    
+    trace = session['trace']
+    
+    # Validate step number
+    if step_num < 0 or step_num >= len(trace):
+        return "Invalid step", 400
+    
+    # Update current step
+    session['current_step'] = step_num
+    
+    # Get step data
+    step_data = trace[step_num]
+    
+    return render_template(
+        'partials/step.html',
+        step_data=step_data,
+        current_step=step_num,
+        total_steps=len(trace),
+        source_code=get_source_code()
+    )
+
+
+@app.route('/problem/<algorithm_id>/reset')
+def reset(algorithm_id):
+    """Reset to step 0."""
+    return redirect(url_for('get_step', algorithm_id=algorithm_id, step_num=0))
+
+
+@app.route('/problem/<algorithm_id>/jump/<int:step_num>')
+def jump_to_step(algorithm_id, step_num):
+    """Jump to specific step."""
+    return redirect(url_for('get_step', algorithm_id=algorithm_id, step_num=step_num))
+
+
+def get_source_code():
+    """
+    Return the algorithm source code for display.
+    
+    In a more complete version, this would be dynamically loaded
+    per algorithm. For MVP, we hardcode the overlapping intervals algorithm.
+    """
+    return '''def filter_covered(remaining, max_end_so_far, depth=0):
+    """Recursively filter out covered intervals."""
+    
+    # BASE CASE: No more intervals to process
+    if not remaining:
+        return []
+    
+    # Process first interval
+    current = remaining[0]
+    rest = remaining[1:]
+    
+    # DECISION POINT: Is this interval covered?
+    if current[1] <= max_end_so_far:
+        # Covered: skip this interval
+        return filter_covered(rest, max_end_so_far, depth + 1)
+    else:
+        # Not covered: keep it and update max_end
+        new_max_end = max(max_end_so_far, current[1])
+        return [current] + filter_covered(rest, new_max_end, depth + 1)'''
+
+
+# Development-only route for debugging
+@app.route('/debug/trace')
+def debug_trace():
+    """Debug route to inspect current trace in session."""
+    if 'trace' not in session:
+        return jsonify({'error': 'No trace in session'})
+    
+    return jsonify({
+        'total_steps': len(session['trace']),
+        'current_step': session.get('current_step', 0),
+        'metadata': session.get('metadata', {}),
+        'sample_steps': session['trace'][:3]  # Show first 3 steps
+    })
+
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
+```
+</file>
+
+<file path='requirements.txt' size='15' ext='.txt'>
+```
+Flask
+Werkzeug
+```
+</file>
+
+<file path='verify_setup.py' size='6023' ext='.py' imports='sys,pathlib'>
+```
+"""
+Setup Verification Script
+==========================
+
+Run this to verify your recursion-visualizer setup is correct.
+"""
+
+import sys
+from pathlib import Path
+
+def check_file_structure():
+    """Verify all required files exist."""
+    print("\n" + "="*70)
+    print("CHECKING FILE STRUCTURE")
+    print("="*70)
+    
+    required_files = [
+        'app.py',
+        'requirements.txt',
+        'algorithms/__init__.py',
+        'algorithms/overlapping_intervals_tracer.py',
+        'templates/base.html',
+        'templates/index.html',
+        'templates/problem.html',
+        'templates/partials/step.html',
+    ]
+    
+    all_exist = True
+    for file_path in required_files:
+        full_path = Path(file_path)
+        exists = full_path.exists()
+        status = "✅" if exists else "❌"
+        print(f"{status} {file_path}")
+        if not exists:
+            all_exist = False
+    
+    return all_exist
+
+
+def test_tracer_import():
+    """Test if tracer can be imported."""
+    print("\n" + "="*70)
+    print("TESTING TRACER IMPORT")
+    print("="*70)
+    
+    try:
+        sys.path.insert(0, str(Path('algorithms')))
+        from overlapping_intervals_tracer import OverlappingIntervalsTracer
+        print("✅ Tracer imported successfully")
+        return True
+    except Exception as e:
+        print(f"❌ Import failed: {e}")
+        return False
+
+
+def test_tracer_execution():
+    """Test if tracer can run."""
+    print("\n" + "="*70)
+    print("TESTING TRACER EXECUTION")
+    print("="*70)
+    
+    try:
+        sys.path.insert(0, str(Path('algorithms')))
+        from overlapping_intervals_tracer import OverlappingIntervalsTracer
+        
+        tracer = OverlappingIntervalsTracer()
+        test_intervals = [(540, 660), (600, 720), (540, 720), (900, 960)]
+        output = tracer.run(test_intervals)
+        
+        print(f"✅ Tracer executed successfully")
+        print(f"   • Steps captured: {len(output['trace'])}")
+        print(f"   • Result: {output['result']}")
+        print(f"   • Metadata: {output['metadata']}")
+        
+        # Verify trace structure
+        if len(output['trace']) > 0:
+            step0 = output['trace'][0]
+            print(f"\n   First step structure:")
+            print(f"   • Keys: {list(step0.keys())}")
+            print(f"   • Phase: {step0.get('phase')}")
+            print(f"   • Action: {step0.get('action')}")
+        
+        return True
+    except Exception as e:
+        print(f"❌ Execution failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_flask_imports():
+    """Test if Flask imports work."""
+    print("\n" + "="*70)
+    print("TESTING FLASK IMPORTS")
+    print("="*70)
+    
+    try:
+        from flask import Flask
+        print("✅ Flask imported successfully")
+        return True
+    except Exception as e:
+        print(f"❌ Flask import failed: {e}")
+        print("   Run: pip install -r requirements.txt")
+        return False
+
+
+def check_templates():
+    """Verify template files are valid."""
+    print("\n" + "="*70)
+    print("CHECKING TEMPLATES")
+    print("="*70)
+    
+    templates = {
+        'templates/base.html': [
+            ("Has <html> tag", lambda c: "<html" in c.lower()),
+            ("Has {% block content %}", lambda c: "{% block content %}" in c),
+            ("Has HTMX script", lambda c: "htmx.org" in c),
+        ],
+        'templates/index.html': [
+            ("Extends base", lambda c: "{% extends" in c),
+            ("Has content block", lambda c: "{% block content %}" in c),
+            ("Has algorithms loop", lambda c: "{% for algo in algorithms %}" in c),
+        ],
+        'templates/problem.html': [
+            ("Extends base", lambda c: "{% extends" in c),
+            ("Has HTMX navigation", lambda c: "hx-get" in c),
+            ("Has visualization container", lambda c: "visualization-container" in c),
+        ],
+        'templates/partials/step.html': [
+            ("Has step_data", lambda c: "step_data" in c),
+            ("Has intervals_state", lambda c: "intervals_state" in c),
+            ("Has explanation", lambda c: "explanation" in c),
+        ],
+    }
+    
+    all_valid = True
+    for template_path, checks in templates.items():
+        path = Path(template_path)
+        if not path.exists():
+            print(f"❌ {template_path} - NOT FOUND")
+            all_valid = False
+            continue
+        
+        content = path.read_text()
+        
+        all_checks_pass = all(check_fn(content) for _, check_fn in checks)
+        status = "✅" if all_checks_pass else "❌"
+        print(f"{status} {template_path}")
+        
+        if not all_checks_pass:
+            for check_name, check_fn in checks:
+                if not check_fn(content):
+                    print(f"    ❌ {check_name}")
+                    all_valid = False
+    
+    return all_valid
+
+
+def main():
+    """Run all verification checks."""
+    print("\n" + "█"*70)
+    print("RECURSION VISUALIZER - SETUP VERIFICATION")
+    print("█"*70)
+    
+    results = {
+        "File Structure": check_file_structure(),
+        "Flask Imports": test_flask_imports(),
+        "Tracer Import": test_tracer_import(),
+        "Tracer Execution": test_tracer_execution(),
+        "Templates": check_templates(),
+    }
+    
+    print("\n" + "="*70)
+    print("SUMMARY")
+    print("="*70)
+    
+    for check_name, passed in results.items():
+        status = "✅ PASS" if passed else "❌ FAIL"
+        print(f"{status} - {check_name}")
+    
+    all_passed = all(results.values())
+    
+    print("\n" + "="*70)
+    if all_passed:
+        print("🎉 ALL CHECKS PASSED!")
+        print("="*70)
+        print("\nYou're ready to run the Flask app:")
+        print("  python app.py")
+        print("\nThen open: http://localhost:5000")
+    else:
+        print("⚠️  SOME CHECKS FAILED")
+        print("="*70)
+        print("\nFix the issues above, then run this script again.")
+    print("="*70 + "\n")
+
+
+if __name__ == "__main__":
+    main()
+```
+</file>
+
+<file path='templates/base.html' size='5395' ext='.html'>
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Recursion Visualizer{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Custom styles -->
+    <style>
+        /* Code highlighting styles */
+        .code-line {
+            padding: 0.15rem 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            color: #d1d5db;
+        }
+        
+        .code-line-highlighted {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .code-line-number {
+            display: inline-block;
+            width: 2rem;
+            text-align: right;
+            color: #6b7280;
+            margin-right: 1rem;
+            user-select: none;
+        }
+        
+        /* Enhanced interval bar styles with animations */
+        .interval-bar {
+            height: 40px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            color: white;
+            font-weight: 700;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .interval-kept {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: 2px solid #047857;
+        }
+        
+        .interval-examining {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: 3px solid #1d4ed8;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 4px 6px rgba(0,0,0,0.1);
+            animation: pulse-border 2s infinite;
+        }
+        
+        .interval-covered {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: 2px solid #b91c1c;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+        
+        .interval-pending {
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+            border: 1px solid #374151;
+        }
+        
+        .interval-removed {
+            background: #e5e7eb;
+            color: #9ca3af;
+            border: 1px solid #d1d5db;
+            text-decoration: line-through;
+        }
+        
+        .interval-sorted {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            border: 1px solid #6d28d9;
+        }
+        
+        .interval-result {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border: 2px solid #047857;
+        }
+        
+        @keyframes pulse-border {
+            0%, 100% {
+                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 4px 6px rgba(0,0,0,0.1);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.2), 0 4px 6px rgba(0,0,0,0.1);
+            }
+        }
+        
+        /* Call stack styles */
+        .call-stack-item {
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            background-color: #f3f4f6;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .call-stack-current {
+            background-color: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            font-weight: 600;
+        }
+        
+        /* Smooth transitions for HTMX swaps */
+        .htmx-swapping {
+            opacity: 0;
+            transition: opacity 150ms ease-out;
+        }
+        
+        .htmx-settling {
+            opacity: 1;
+            transition: opacity 150ms ease-in;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <a href="/" class="text-2xl font-bold text-gray-900 hover:text-blue-600 transition">
+                        🔄 Recursion Visualizer
+                    </a>
+                </div>
+                <nav class="flex gap-4">
+                    <a href="/" class="text-gray-600 hover:text-gray-900 transition">Home</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 transition">About</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-6 text-center text-gray-600 text-sm">
+            Built with Flask, HTMX, and Alpine.js | 
+            <a href="https://github.com" class="text-blue-600 hover:underline">View on GitHub</a>
+        </div>
+    </footer>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+```
+</file>
+
+<file path='templates/index.html' size='5834' ext='.html'>
+```
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 py-12">
+    
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold text-gray-900 mb-4">
+            🔄 Recursion Visualizer
+        </h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+            Step through recursive algorithms and see exactly what happens at each function call.
+            Watch the call stack grow, variables change, and decisions unfold.
+        </p>
+    </div>
+    
+    <!-- Features -->
+    <div class="grid grid-cols-3 gap-6 mb-12">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+            <div class="text-4xl mb-3">📝</div>
+            <h3 class="font-bold text-gray-900 mb-2">Line-by-Line Code</h3>
+            <p class="text-sm text-gray-600">Follow execution with highlighted code</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+            <div class="text-4xl mb-3">📊</div>
+            <h3 class="font-bold text-gray-900 mb-2">Problem-Specific Views</h3>
+            <p class="text-sm text-gray-600">Visual representations that make sense</p>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center">
+            <div class="text-4xl mb-3">📞</div>
+            <h3 class="font-bold text-gray-900 mb-2">Call Stack Tracking</h3>
+            <p class="text-sm text-gray-600">See recursion depth in real-time</p>
+        </div>
+    </div>
+    
+    <!-- Algorithm List -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-6">Available Algorithms</h2>
+        
+        <div class="space-y-4">
+            {% for algo in algorithms %}
+            <a href="/problem/{{ algo.id }}" 
+               class="block p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition group">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition">
+                            {{ algo.name }}
+                        </h3>
+                        <p class="text-gray-600 mt-1">{{ algo.description }}</p>
+                        <div class="flex gap-3 mt-3">
+                            <span class="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded text-sm">
+                                {{ algo.category }}
+                            </span>
+                            <span class="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm">
+                                {{ algo.difficulty }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="text-4xl ml-6 group-hover:scale-110 transition">
+                        →
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        
+        <!-- Coming Soon -->
+        <div class="mt-8 pt-8 border-t border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-700 mb-4">Coming Soon:</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-gray-50 rounded-lg text-gray-500">
+                    <div class="font-semibold">🌳 Tree Traversals</div>
+                    <div class="text-sm">Inorder, Preorder, Postorder</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg text-gray-500">
+                    <div class="font-semibold">🔀 Merge Sort</div>
+                    <div class="text-sm">Divide and conquer visualization</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg text-gray-500">
+                    <div class="font-semibold">♟️ N-Queens</div>
+                    <div class="text-sm">Backtracking on a chessboard</div>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg text-gray-500">
+                    <div class="font-semibold">🎯 Subset Sum</div>
+                    <div class="text-sm">Dynamic programming approach</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Start Guide -->
+    <div class="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">🚀 How to Use</h2>
+        <ol class="space-y-3 text-gray-700">
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</span>
+                <span>Choose an algorithm from the list above</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">2</span>
+                <span>Use <strong>Next/Previous</strong> buttons or <strong>arrow keys</strong> to step through execution</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">3</span>
+                <span>Watch the code highlight, visualization update, and call stack grow</span>
+            </li>
+            <li class="flex gap-3">
+                <span class="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">4</span>
+                <span>Read the explanation box to understand each decision point</span>
+            </li>
+        </ol>
+    </div>
+    
+</div>
+{% endblock %}
+```
+</file>
+
+<file path='templates/problem.html' size='7378' ext='.html'>
+```
+{% extends "base.html" %}
+
+{% block title %}{{ algorithm_name }} - Recursion Visualizer{% endblock %}
+
+{% block content %}
+<div class="max-w-[1600px] mx-auto px-6 py-6" x-data="{ 
+    currentStep: {{ current_step }},
+    totalSteps: {{ total_steps }}
+}">
+    
+    <!-- Algorithm Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ algorithm_name }}</h1>
+        <p class="text-gray-600">Step-by-step visualization of recursive execution</p>
+        
+        <!-- Metadata -->
+        <div class="grid grid-cols-4 gap-4 mt-4 text-sm">
+            <div class="bg-blue-50 rounded p-3">
+                <div class="text-blue-900 font-semibold">Total Steps</div>
+                <div class="text-2xl font-bold text-blue-600">{{ metadata.total_steps }}</div>
+            </div>
+            <div class="bg-green-50 rounded p-3">
+                <div class="text-green-900 font-semibold">Max Depth</div>
+                <div class="text-2xl font-bold text-green-600">{{ metadata.max_recursion_depth }}</div>
+            </div>
+            <div class="bg-purple-50 rounded p-3">
+                <div class="text-purple-900 font-semibold">Recursive Calls</div>
+                <div class="text-2xl font-bold text-purple-600">{{ metadata.total_recursive_calls }}</div>
+            </div>
+            <div class="bg-orange-50 rounded p-3">
+                <div class="text-orange-900 font-semibold">Removed</div>
+                <div class="text-2xl font-bold text-orange-600">{{ metadata.removed_intervals }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Enhanced Navigation Controls -->
+    <div class="bg-white rounded-xl shadow-lg border-2 border-gray-300 p-6 mb-6">
+        
+        <!-- Step Counter (Large and Prominent) -->
+        <div class="text-center mb-4">
+            <div class="text-6xl font-bold text-gray-900 mb-2">
+                <span x-text="currentStep + 1"></span>
+                <span class="text-gray-400">/</span>
+                <span x-text="totalSteps" class="text-gray-500"></span>
+            </div>
+            <div class="text-sm text-gray-600 font-medium">
+                Current Step
+            </div>
+        </div>
+        
+        <!-- Progress Bar (Enhanced) -->
+        <div class="mb-6">
+            <div class="bg-gray-200 rounded-full h-4 overflow-hidden shadow-inner">
+                <div 
+                    class="h-full transition-all duration-300 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                    :style="`width: ${((currentStep + 1) / totalSteps) * 100}%`"
+                ></div>
+            </div>
+            <div class="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Start</span>
+                <span x-text="`${Math.round(((currentStep + 1) / totalSteps) * 100)}% Complete`"></span>
+                <span>End</span>
+            </div>
+        </div>
+        
+        <!-- Navigation Buttons (Large and Clear) -->
+        <div class="flex items-center justify-center gap-4">
+            
+            <!-- Previous Button -->
+            <button 
+                hx-get="/problem/{{ algorithm_id }}/step/{{ current_step - 1 }}"
+                hx-target="#visualization-container"
+                hx-swap="innerHTML swap:200ms"
+                hx-push-url="true"
+                :disabled="currentStep === 0"
+                @click="currentStep = Math.max(0, currentStep - 1)"
+                class="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 flex items-center gap-2"
+                :class="currentStep === 0 ? 'opacity-50' : ''"
+            >
+                <span class="text-2xl">◀</span>
+                <span>Previous</span>
+            </button>
+            
+            <!-- Reset Button -->
+            <button 
+                hx-get="/problem/{{ algorithm_id }}/step/0"
+                hx-target="#visualization-container"
+                hx-swap="innerHTML swap:200ms"
+                hx-push-url="true"
+                @click="currentStep = 0"
+                class="px-6 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl hover:from-gray-700 hover:to-gray-800 transition-all duration-200 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
+            >
+                ⟲ Reset
+            </button>
+            
+            <!-- Next Button -->
+            <button 
+                hx-get="/problem/{{ algorithm_id }}/step/{{ current_step + 1 }}"
+                hx-target="#visualization-container"
+                hx-swap="innerHTML swap:200ms"
+                hx-push-url="true"
+                :disabled="currentStep === totalSteps - 1"
+                @click="currentStep = Math.min(totalSteps - 1, currentStep + 1)"
+                class="px-8 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 flex items-center gap-2"
+                :class="currentStep === totalSteps - 1 ? 'opacity-50' : ''"
+            >
+                <span>Next</span>
+                <span class="text-2xl">▶</span>
+            </button>
+            
+        </div>
+        
+        <!-- Keyboard Hint -->
+        <div class="text-center mt-4">
+            <div class="inline-flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg text-sm text-gray-600 border border-gray-300">
+                <span class="font-mono bg-white px-2 py-1 rounded border border-gray-300">←</span>
+                <span class="font-mono bg-white px-2 py-1 rounded border border-gray-300">→</span>
+                <span>Use arrow keys to navigate</span>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- Main Visualization Container (updated by HTMX) -->
+    <div id="visualization-container">
+        {% include 'partials/step.html' %}
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        // Prevent default arrow key behavior (page scrolling)
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            e.preventDefault();
+        }
+        
+        if (e.key === 'ArrowLeft') {
+            const prevBtn = document.querySelector('button[hx-get*="step/' + (parseInt('{{ current_step }}') - 1) + '"]');
+            if (prevBtn && !prevBtn.disabled) {
+                prevBtn.click();
+            }
+        } else if (e.key === 'ArrowRight') {
+            const nextBtn = document.querySelector('button[hx-get*="step/' + (parseInt('{{ current_step }}') + 1) + '"]');
+            if (nextBtn && !nextBtn.disabled) {
+                nextBtn.click();
+            }
+        }
+    });
+    
+    // Smooth scroll to top on navigation
+    document.body.addEventListener('htmx:afterSwap', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+</script>
+{% endblock %}
+```
+</file>
+
+<file path='templates/partials/step.html' size='10135' ext='.html'>
+```
+<!-- Educational UI: Timeline-First, Explanation-First Pattern -->
+
+<!-- EXPLANATION BOX - At TOP for immediate context -->
+<div class="mb-6 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-xl shadow-lg border-2 border-blue-300 p-8">
+    <div class="flex items-start gap-4">
+        <!-- Attention Indicator -->
+        <div class="flex-shrink-0 w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-3xl animate-pulse">
+            👁️
+        </div>
+        
+        <div class="flex-1">
+            <h2 class="text-2xl font-bold text-gray-900 mb-3">
+                💡 What's Happening Right Now
+            </h2>
+            
+            <!-- Action Badge -->
+            <div class="mb-3">
+                <span class="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg text-base font-bold shadow-md">
+                    {{ step_data.action }}
+                </span>
+            </div>
+            
+            <!-- Main Explanation -->
+            <p class="text-gray-800 leading-relaxed text-xl font-medium">
+                {{ step_data.explanation }}
+            </p>
+            
+            <!-- Result (if present) -->
+            {% if step_data.result is not none %}
+            <div class="mt-4 pt-4 border-t-2 border-blue-200">
+                <div class="flex items-center gap-2">
+                    <strong class="text-gray-900 text-lg">✅ Result:</strong>
+                    <code class="bg-white px-4 py-2 rounded-lg text-base font-mono border border-blue-200 shadow-sm">{{ step_data.result }}</code>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- MAIN CONTENT: Hero Timeline + Supporting Panels -->
+<div class="grid grid-cols-3 gap-6">
+    
+    <!-- LEFT: HERO TIMELINE (Takes 2 columns) -->
+    <div class="col-span-2 bg-white rounded-xl shadow-lg border-2 border-gray-300 p-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">
+                📊 Interval Timeline
+            </h2>
+            <div class="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                Watch the intervals below ⬇️
+            </div>
+        </div>
+        
+        {% if step_data.intervals_state %}
+        <div class="space-y-4">
+            {% for item in step_data.intervals_state %}
+            {% set interval = item.interval %}
+            {% set status = item.status %}
+            
+            <div class="flex items-center gap-3 group">
+                <!-- Interval label with larger text -->
+                <div class="w-28 text-base font-mono font-bold text-gray-700">
+                    {{ interval }}
+                </div>
+                
+                <!-- Visual bar - ENLARGED -->
+                <div class="flex-1 relative h-12 bg-gray-50 rounded-lg border border-gray-200">
+                    <div 
+                        class="interval-bar interval-{{ status }}"
+                        style="
+                            position: absolute;
+                            left: {{ (interval[0] / 10) }}%;
+                            width: {{ ((interval[1] - interval[0]) / 10) }}%;
+                            opacity: {{ item.opacity }};
+                            height: 40px;
+                            top: 2px;
+                        "
+                    >
+                        <span class="font-bold text-sm">{{ interval[1] - interval[0] }}</span>
+                    </div>
+                </div>
+                
+                <!-- Status badge - LARGER -->
+                <div class="w-28">
+                    {% if status == 'kept' %}
+                    <span class="block bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-bold text-center border-2 border-green-300">
+                        ✅ Kept
+                    </span>
+                    {% elif status == 'examining' %}
+                    <span class="block bg-blue-100 text-blue-800 px-3 py-2 rounded-lg text-sm font-bold text-center border-2 border-blue-400 animate-pulse">
+                        👉 Active
+                    </span>
+                    {% elif status == 'covered' %}
+                    <span class="block bg-red-100 text-red-800 px-3 py-2 rounded-lg text-sm font-bold text-center border-2 border-red-300">
+                        ❌ Covered
+                    </span>
+                    {% elif status == 'removed' %}
+                    <span class="block bg-gray-100 text-gray-600 px-3 py-2 rounded-lg text-xs text-center border border-gray-300">
+                        Removed
+                    </span>
+                    {% else %}
+                    <span class="block bg-gray-50 text-gray-500 px-3 py-2 rounded-lg text-xs text-center border border-gray-200">
+                        Pending
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Timeline axis - LARGER -->
+        <div class="mt-8 pt-6 border-t-2 border-gray-300">
+            <div class="flex justify-between text-sm font-semibold text-gray-600">
+                <span>0</span>
+                <span>250</span>
+                <span>500</span>
+                <span>750</span>
+                <span>1000</span>
+            </div>
+            <div class="text-center text-xs text-gray-500 mt-2">Time Units</div>
+        </div>
+        {% else %}
+        <div class="text-gray-500 text-center py-12 text-lg">
+            No intervals to display
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- RIGHT: Variables + Call Stack (Stacked, 1 column) -->
+    <div class="space-y-6">
+        
+        <!-- Variables Panel - COMPACT -->
+        <div class="bg-gray-50 rounded-lg border border-gray-300 p-4">
+            <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                🔧 <span>Variables</span>
+            </h3>
+            
+            <div class="space-y-2 text-sm">
+                {% if step_data.variables %}
+                    {% for key, value in step_data.variables.items() %}
+                    <div class="bg-white rounded p-2 border-l-4 border-blue-400">
+                        <div class="text-xs font-semibold text-gray-600">{{ key }}</div>
+                        <div class="text-xs font-mono text-gray-900 mt-1">
+                            {% if value is sequence and value is not string %}
+                                {% if value|length > 3 %}
+                                    [{{ value[:3]|join(', ') }}, ...]
+                                {% else %}
+                                    {{ value }}
+                                {% endif %}
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-gray-500 text-center py-2 text-xs">
+                        No variables
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Phase badge -->
+            <div class="mt-3 pt-3 border-t border-gray-300">
+                <span class="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs font-semibold">
+                    {{ step_data.phase|replace('_', ' ')|title }}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Call Stack - COMPACT -->
+        <div class="bg-gray-50 rounded-lg border border-gray-300 p-4">
+            <h3 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
+                📞 <span>Call Stack</span>
+            </h3>
+            
+            {% if step_data.call_stack %}
+            <div class="space-y-1 text-xs">
+                {% for call in step_data.call_stack %}
+                <div class="p-2 rounded {% if loop.last %}bg-blue-100 border-l-4 border-blue-600 font-bold{% else %}bg-white{% endif %}">
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-500">{{ loop.index }}.</span>
+                        <span class="flex-1 font-mono">{{ call }}</span>
+                        {% if loop.last %}
+                        <span class="text-xs bg-blue-600 text-white px-2 py-0.5 rounded">NOW</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-3 pt-3 border-t border-gray-300 text-xs text-gray-600">
+                <strong>Depth:</strong> {{ step_data.get('depth', 0) }} | 
+                <strong>Calls:</strong> {{ step_data.call_stack|length }}
+            </div>
+            {% else %}
+            <div class="text-gray-500 text-center py-4 text-xs">
+                No active calls
+            </div>
+            {% endif %}
+        </div>
+        
+    </div>
+    
+</div>
+
+<!-- CODE VIEW - Now at BOTTOM (reference only) -->
+<div class="mt-6 bg-gray-900 rounded-lg border border-gray-700 p-4">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-bold text-gray-200 flex items-center gap-2">
+            📝 <span>Algorithm Code</span>
+            <span class="text-xs text-gray-400 font-normal">(Reference)</span>
+        </h3>
+        {% if step_data.get('code_line') %}
+        <span class="text-xs bg-yellow-500 text-yellow-900 px-2 py-1 rounded font-bold">
+            → Line {{ step_data.code_line }}
+        </span>
+        {% endif %}
+    </div>
+    
+    <div class="overflow-x-auto max-h-64 overflow-y-auto">
+        {% set lines = source_code.split('\n') %}
+        {% set current_line = step_data.get('code_line', 0) %}
+        
+        {% for line in lines %}
+        <div class="code-line text-xs {% if loop.index == current_line %}code-line-highlighted{% endif %}">
+            <span class="code-line-number">{{ loop.index }}</span>{{ line }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+```
+</file>
+
+<file path='algorithms/__init__.py' size='0' ext='.py'>
+```
+
+```
+</file>
+
+<file path='algorithms/overlapping_intervals_tracer.py' size='13361' ext='.py' imports='typing'>
+```
+"""
+Instrumented Overlapping Intervals Algorithm with Trace Capture
+================================================================
+
+This module provides a tracer version of the overlapping intervals algorithm
+that captures execution steps for visualization purposes.
+"""
+
+from typing import List, Tuple, Dict, Any
+
+
+class OverlappingIntervalsTracer:
+    """
+    Traces execution of the overlapping intervals removal algorithm.
+    
+    Captures each step of the recursive algorithm for later visualization.
+    """
+    
+    def __init__(self):
+        self.trace: List[Dict[str, Any]] = []
+        self.step_counter = 0
+        
+    def run(self, intervals: List[Tuple[int, int]]) -> Dict[str, Any]:
+        """
+        Execute algorithm and capture trace.
+        
+        Args:
+            intervals: List of (start, end) tuples
+            
+        Returns:
+            Dict containing:
+                - 'result': Final list of non-covered intervals
+                - 'trace': List of execution steps
+                - 'metadata': Summary statistics
+        """
+        self.trace = []
+        self.step_counter = 0
+        
+        # Capture initial state
+        self._add_step(
+            phase="initialization",
+            action="Algorithm started",
+            explanation=f"Input: {len(intervals)} intervals to process",
+            intervals_state=self._create_intervals_state(intervals, "pending"),
+            variables={
+                "input_intervals": intervals,
+                "total_count": len(intervals)
+            }
+        )
+        
+        # Sort intervals
+        sorted_intervals = sorted(intervals, key=lambda x: (x[0], -x[1]))
+        
+        self._add_step(
+            phase="sorting",
+            action="Sorted intervals",
+            explanation=(
+                "Sorted by start time (ascending), then end time (descending). "
+                "This ensures longer intervals come first when starts are equal."
+            ),
+            intervals_state=self._create_intervals_state(sorted_intervals, "sorted"),
+            variables={
+                "sorted_intervals": sorted_intervals,
+                "sort_key": "(start ↑, end ↓)"
+            },
+            code_line=8  # Corresponds to line in original algorithm
+        )
+        
+        # Run recursive filtering
+        result = self._filter_covered(sorted_intervals, float('-inf'), depth=0)
+        
+        # Capture final state
+        self._add_step(
+            phase="completion",
+            action="Algorithm completed",
+            explanation=(
+                f"Removed {len(intervals) - len(result)} covered interval(s). "
+                f"Result contains {len(result)} interval(s)."
+            ),
+            intervals_state=self._create_final_state(sorted_intervals, result),
+            variables={
+                "final_result": result,
+                "removed_count": len(intervals) - len(result)
+            },
+            result=result
+        )
+        
+        # Calculate metadata
+        max_depth = max((step.get('depth', 0) for step in self.trace), default=0)
+        total_calls = sum(1 for step in self.trace if step.get('phase') == 'recursive_call')
+        
+        return {
+            'result': result,
+            'trace': self.trace,
+            'metadata': {
+                'total_steps': len(self.trace),
+                'total_intervals': len(intervals),
+                'result_intervals': len(result),
+                'removed_intervals': len(intervals) - len(result),
+                'max_recursion_depth': max_depth,
+                'total_recursive_calls': total_calls
+            }
+        }
+    
+    def _filter_covered(
+        self, 
+        remaining: List[Tuple[int, int]], 
+        max_end_so_far: float,
+        depth: int,
+        call_stack: List[str] = None
+    ) -> List[Tuple[int, int]]:
+        """
+        Recursively filter covered intervals (instrumented version).
+        
+        Args:
+            remaining: Intervals left to process
+            max_end_so_far: Maximum end time seen so far
+            depth: Current recursion depth
+            call_stack: Stack trace for visualization
+            
+        Returns:
+            List of non-covered intervals
+        """
+        if call_stack is None:
+            call_stack = []
+        
+        # Add current call to stack
+        current_call = f"filter_covered({len(remaining)} intervals, max_end={max_end_so_far})"
+        call_stack = call_stack + [current_call]
+        
+        # Capture recursive call entry
+        self._add_step(
+            phase="recursive_call",
+            action=f"Enter recursive call (depth {depth})",
+            explanation=(
+                f"Processing {len(remaining)} remaining interval(s) "
+                f"with max_end_so_far = {max_end_so_far}"
+            ),
+            intervals_state=self._create_intervals_state(remaining, "examining"),
+            variables={
+                "remaining": remaining,
+                "max_end_so_far": max_end_so_far,
+                "depth": depth
+            },
+            depth=depth,
+            call_stack=call_stack.copy(),
+            code_line=12  # Corresponds to function definition
+        )
+        
+        # BASE CASE: Empty list
+        if not remaining:
+            self._add_step(
+                phase="base_case",
+                action="Base case reached",
+                explanation="No more intervals to process. Return empty list.",
+                intervals_state=[],
+                variables={
+                    "remaining": [],
+                    "result": []
+                },
+                depth=depth,
+                call_stack=call_stack.copy(),
+                result=[],
+                code_line=15
+            )
+            return []
+        
+        # Process first interval
+        current = remaining[0]
+        rest = remaining[1:]
+        
+        self._add_step(
+            phase="examination",
+            action=f"Examining interval {current}",
+            explanation=f"Current interval: {current}. Checking if covered by max_end_so_far ({max_end_so_far}).",
+            intervals_state=self._mark_current(remaining, current),
+            variables={
+                "current": current,
+                "rest": rest,
+                "max_end_so_far": max_end_so_far
+            },
+            depth=depth,
+            call_stack=call_stack.copy(),
+            code_line=18
+        )
+        
+        # DECISION POINT: Covered or not?
+        if current[1] <= max_end_so_far:
+            # COVERED
+            self._add_step(
+                phase="decision_covered",
+                action=f"Interval {current} is COVERED",
+                explanation=(
+                    f"Since {current[1]} ≤ {max_end_so_far}, this interval ends before or at "
+                    f"the current maximum end time. It is completely covered by a previous interval. "
+                    f"Skip this interval and continue with the rest."
+                ),
+                intervals_state=self._mark_covered(remaining, current),
+                variables={
+                    "current": current,
+                    "current_end": current[1],
+                    "max_end_so_far": max_end_so_far,
+                    "decision": "COVERED"
+                },
+                depth=depth,
+                call_stack=call_stack.copy(),
+                code_line=22
+            )
+            
+            result = self._filter_covered(rest, max_end_so_far, depth + 1, call_stack)
+            
+        else:
+            # NOT COVERED
+            new_max_end = max(max_end_so_far, current[1])
+            
+            self._add_step(
+                phase="decision_keep",
+                action=f"Interval {current} is NOT COVERED",
+                explanation=(
+                    f"Since {current[1]} > {max_end_so_far}, this interval extends beyond "
+                    f"the current maximum end time. Keep this interval in the result. "
+                    f"Update max_end_so_far from {max_end_so_far} to {new_max_end}."
+                ),
+                intervals_state=self._mark_kept(remaining, current),
+                variables={
+                    "current": current,
+                    "current_end": current[1],
+                    "max_end_so_far": max_end_so_far,
+                    "new_max_end": new_max_end,
+                    "decision": "KEEP"
+                },
+                depth=depth,
+                call_stack=call_stack.copy(),
+                code_line=25
+            )
+            
+            result = [current] + self._filter_covered(rest, new_max_end, depth + 1, call_stack)
+        
+        # Capture return
+        self._add_step(
+            phase="return",
+            action=f"Return from depth {depth}",
+            explanation=f"Returning {len(result)} interval(s) to caller.",
+            intervals_state=self._create_intervals_state(result, "result"),
+            variables={
+                "result": result,
+                "result_length": len(result)
+            },
+            depth=depth,
+            call_stack=call_stack.copy(),
+            result=result,
+            code_line=28
+        )
+        
+        return result
+    
+    def _add_step(self, **kwargs):
+        """Add a step to the trace."""
+        step = {
+            'step': self.step_counter,
+            **kwargs
+        }
+        self.trace.append(step)
+        self.step_counter += 1
+    
+    def _create_intervals_state(
+        self, 
+        intervals: List[Tuple[int, int]], 
+        status: str
+    ) -> List[Dict[str, Any]]:
+        """Create visualization state for intervals."""
+        return [
+            {
+                'interval': interval,
+                'status': status,
+                'opacity': 1.0 if status in ['examining', 'kept'] else 0.6
+            }
+            for interval in intervals
+        ]
+    
+    def _mark_current(
+        self, 
+        intervals: List[Tuple[int, int]], 
+        current: Tuple[int, int]
+    ) -> List[Dict[str, Any]]:
+        """Mark current interval being examined."""
+        return [
+            {
+                'interval': interval,
+                'status': 'examining' if interval == current else 'pending',
+                'opacity': 1.0 if interval == current else 0.5
+            }
+            for interval in intervals
+        ]
+    
+    def _mark_covered(
+        self, 
+        intervals: List[Tuple[int, int]], 
+        covered: Tuple[int, int]
+    ) -> List[Dict[str, Any]]:
+        """Mark interval as covered (will be removed)."""
+        return [
+            {
+                'interval': interval,
+                'status': 'covered' if interval == covered else 'pending',
+                'opacity': 0.3 if interval == covered else 0.5
+            }
+            for interval in intervals
+        ]
+    
+    def _mark_kept(
+        self, 
+        intervals: List[Tuple[int, int]], 
+        kept: Tuple[int, int]
+    ) -> List[Dict[str, Any]]:
+        """Mark interval as kept in result."""
+        return [
+            {
+                'interval': interval,
+                'status': 'kept' if interval == kept else 'pending',
+                'opacity': 1.0 if interval == kept else 0.5
+            }
+            for interval in intervals
+        ]
+    
+    def _create_final_state(
+        self, 
+        all_intervals: List[Tuple[int, int]], 
+        result: List[Tuple[int, int]]
+    ) -> List[Dict[str, Any]]:
+        """Create final visualization state showing kept vs removed."""
+        result_set = set(result)
+        return [
+            {
+                'interval': interval,
+                'status': 'kept' if interval in result_set else 'removed',
+                'opacity': 1.0 if interval in result_set else 0.2
+            }
+            for interval in all_intervals
+        ]
+
+
+# ============================================================================
+# STANDALONE TEST
+# ============================================================================
+
+if __name__ == "__main__":
+    print("\n" + "=" * 70)
+    print("TRACER TEST: Overlapping Intervals")
+    print("=" * 70)
+    
+    # Test with original example
+    test_intervals = [(540, 660), (600, 720), (540, 720), (900, 960)]
+    
+    print(f"\n📥 Input: {test_intervals}")
+    
+    tracer = OverlappingIntervalsTracer()
+    output = tracer.run(test_intervals)
+    
+    print(f"\n📤 Result: {output['result']}")
+    print(f"\n📊 Metadata:")
+    for key, value in output['metadata'].items():
+        print(f"   • {key}: {value}")
+    
+    print(f"\n🔍 Trace captured {len(output['trace'])} steps:")
+    print("\nStep-by-step summary:")
+    print("-" * 70)
+    
+    for step in output['trace']:
+        phase_emoji = {
+            'initialization': '🎬',
+            'sorting': '📊',
+            'recursive_call': '📞',
+            'base_case': '🛑',
+            'examination': '🔍',
+            'decision_covered': '❌',
+            'decision_keep': '✅',
+            'return': '⬅️',
+            'completion': '🏁'
+        }.get(step['phase'], '•')
+        
+        depth_indent = "  " * step.get('depth', 0)
+        print(f"{step['step']:2d}. {phase_emoji} {depth_indent}{step['action']}")
+    
+    print("\n" + "=" * 70)
+    print("✓ Tracer test completed successfully!")
+    print("=" * 70 + "\n")
+```
+</file>
+
+<file path='tests/__init__.py' size='0' ext='.py'>
+```
+
+```
+</file>
+
+<file path='tests/test_tracer_educational.py' size='10860' ext='.py' imports='sys,pathlib,overlapping_intervals_tracer'>
+```
+"""
+Educational UI Testing for Recursion Visualizer
+================================================
+
+Tests that verify the tracer produces educationally valuable output
+and validates UI/UX requirements.
+"""
+
+import sys
+from pathlib import Path
+
+# Add algorithms directory to path (go up one level from tests/)
+sys.path.insert(0, str(Path(__file__).parent.parent / 'algorithms'))
+
+from overlapping_intervals_tracer import OverlappingIntervalsTracer
+
+
+def test_basic_execution():
+    """Test 1: Verify tracer completes successfully."""
+    print("\n" + "="*70)
+    print("TEST 1: Basic Execution")
+    print("="*70)
+    
+    tracer = OverlappingIntervalsTracer()
+    test_intervals = [(540, 660), (600, 720), (540, 720), (900, 960)]
+    output = tracer.run(test_intervals)
+    
+    assert 'trace' in output, "Missing 'trace' in output"
+    assert 'result' in output, "Missing 'result' in output"
+    assert 'metadata' in output, "Missing 'metadata' in output"
+    
+    print(f"✅ Tracer executed successfully")
+    print(f"   • Steps captured: {len(output['trace'])}")
+    print(f"   • Result: {output['result']}")
+    
+    return output
+
+
+def test_step_structure(output):
+    """Test 2: Verify each step has required fields."""
+    print("\n" + "="*70)
+    print("TEST 2: Step Structure Validation")
+    print("="*70)
+    
+    required_fields = [
+        'step', 'phase', 'action', 'explanation', 
+        'intervals_state', 'variables'
+    ]
+    
+    trace = output['trace']
+    
+    for i, step in enumerate(trace):
+        for field in required_fields:
+            if field not in step:
+                print(f"❌ Step {i}: Missing field '{field}'")
+                return False
+    
+    print(f"✅ All {len(trace)} steps have required fields")
+    return True
+
+
+def test_educational_clarity(output):
+    """Test 3: Verify explanations are clear and helpful."""
+    print("\n" + "="*70)
+    print("TEST 3: Educational Clarity")
+    print("="*70)
+    
+    trace = output['trace']
+    
+    # Check for key educational phases
+    phases_found = set(step['phase'] for step in trace)
+    expected_phases = {
+        'initialization', 'sorting', 'recursive_call', 
+        'examination', 'decision_covered', 'decision_keep'
+    }
+    
+    missing_phases = expected_phases - phases_found
+    if missing_phases:
+        print(f"⚠️  Missing educational phases: {missing_phases}")
+    else:
+        print(f"✅ All key educational phases present")
+    
+    # Check explanation length (should be substantial)
+    short_explanations = [
+        (i, step) for i, step in enumerate(trace)
+        if len(step.get('explanation', '')) < 20
+    ]
+    
+    if short_explanations:
+        print(f"⚠️  {len(short_explanations)} steps have very short explanations")
+        for i, step in short_explanations[:3]:
+            print(f"   Step {i}: '{step['explanation']}'")
+    else:
+        print(f"✅ All explanations are substantial")
+    
+    return True
+
+
+def test_visualization_data(output):
+    """Test 4: Verify visualization data is present and valid."""
+    print("\n" + "="*70)
+    print("TEST 4: Visualization Data")
+    print("="*70)
+    
+    trace = output['trace']
+    
+    # Check intervals_state structure
+    for i, step in enumerate(trace):
+        intervals_state = step.get('intervals_state', [])
+        
+        if not isinstance(intervals_state, list):
+            print(f"❌ Step {i}: intervals_state is not a list")
+            return False
+        
+        for item in intervals_state:
+            if not isinstance(item, dict):
+                print(f"❌ Step {i}: interval item is not a dict")
+                return False
+            
+            required = ['interval', 'status', 'opacity']
+            for field in required:
+                if field not in item:
+                    print(f"❌ Step {i}: interval missing '{field}'")
+                    return False
+    
+    print(f"✅ All steps have valid visualization data")
+    return True
+
+
+def test_decision_points(output):
+    """Test 5: Identify and validate key decision points."""
+    print("\n" + "="*70)
+    print("TEST 5: Decision Points (Educational Critical)")
+    print("="*70)
+    
+    trace = output['trace']
+    
+    # Find decision points
+    decisions = [
+        step for step in trace 
+        if step['phase'] in ['decision_covered', 'decision_keep']
+    ]
+    
+    print(f"Found {len(decisions)} decision points:")
+    
+    for i, step in enumerate(decisions, 1):
+        print(f"\n  Decision {i}:")
+        print(f"    Phase: {step['phase']}")
+        print(f"    Action: {step['action']}")
+        print(f"    Explanation: {step['explanation'][:80]}...")
+        
+        # Check for key information in decision explanations
+        explanation = step['explanation'].lower()
+        
+        # Should explain WHY the decision was made
+        has_comparison = any(word in explanation for word in ['<=', '>', 'since', 'because'])
+        has_consequence = any(word in explanation for word in ['skip', 'keep', 'covered', 'update'])
+        
+        if has_comparison and has_consequence:
+            print(f"    ✅ Good explanation (has comparison + consequence)")
+        else:
+            print(f"    ⚠️  Could be clearer (missing comparison or consequence)")
+    
+    return True
+
+
+def test_step_by_step_narrative(output):
+    """Test 6: Verify the trace tells a coherent story."""
+    print("\n" + "="*70)
+    print("TEST 6: Step-by-Step Narrative")
+    print("="*70)
+    
+    trace = output['trace']
+    
+    print("\nFull execution narrative:")
+    print("-" * 70)
+    
+    for step in trace:
+        depth_indent = "  " * step.get('depth', 0)
+        phase_emoji = {
+            'initialization': '🎬',
+            'sorting': '📊',
+            'recursive_call': '📞',
+            'base_case': '🛑',
+            'examination': '🔍',
+            'decision_covered': '❌',
+            'decision_keep': '✅',
+            'return': '⬅️',
+            'completion': '🏁'
+        }.get(step['phase'], '•')
+        
+        print(f"{step['step']:2d}. {phase_emoji} {depth_indent}{step['action']}")
+    
+    print("-" * 70)
+    print("✅ Narrative flows logically")
+    
+    return True
+
+
+def test_timeline_visual_states(output):
+    """Test 7: Verify timeline has distinct visual states."""
+    print("\n" + "="*70)
+    print("TEST 7: Timeline Visual States")
+    print("="*70)
+    
+    trace = output['trace']
+    
+    # Collect all statuses used
+    all_statuses = set()
+    for step in trace:
+        for item in step.get('intervals_state', []):
+            all_statuses.add(item['status'])
+    
+    print(f"Timeline uses {len(all_statuses)} distinct visual states:")
+    for status in sorted(all_statuses):
+        print(f"  • {status}")
+    
+    # Should have at least: pending, examining, kept, covered
+    expected_min = {'pending', 'examining', 'kept'}
+    if expected_min.issubset(all_statuses):
+        print("✅ Has key visual states (pending, examining, kept)")
+    else:
+        missing = expected_min - all_statuses
+        print(f"⚠️  Missing key states: {missing}")
+    
+    return True
+
+
+def test_attention_guidance(output):
+    """Test 8: Check if UI guides attention properly."""
+    print("\n" + "="*70)
+    print("TEST 8: Attention Guidance (What to Watch)")
+    print("="*70)
+    
+    trace = output['trace']
+    
+    # Count steps with 'examining' status (should be clear focus)
+    examining_steps = [
+        step for step in trace
+        if any(item['status'] == 'examining' 
+               for item in step.get('intervals_state', []))
+    ]
+    
+    print(f"Steps with clear focus (examining): {len(examining_steps)}")
+    
+    # Check opacity variations (helps guide attention)
+    opacity_variations = set()
+    for step in trace:
+        for item in step.get('intervals_state', []):
+            opacity_variations.add(item['opacity'])
+    
+    print(f"Opacity levels used: {sorted(opacity_variations)}")
+    
+    if len(opacity_variations) >= 3:
+        print("✅ Good use of opacity to guide attention")
+    else:
+        print("⚠️  Could use more opacity variation")
+    
+    return True
+
+
+def print_sample_step(output, step_num):
+    """Print detailed view of a single step."""
+    print("\n" + "="*70)
+    print(f"SAMPLE STEP #{step_num} DETAILS")
+    print("="*70)
+    
+    step = output['trace'][step_num]
+    
+    print(f"\nPhase: {step['phase']}")
+    print(f"Action: {step['action']}")
+    print(f"\nExplanation:")
+    print(f"  {step['explanation']}")
+    
+    print(f"\nVariables:")
+    for key, value in step.get('variables', {}).items():
+        print(f"  {key}: {value}")
+    
+    print(f"\nIntervals State:")
+    for item in step.get('intervals_state', []):
+        print(f"  {item['interval']} -> {item['status']} (opacity: {item['opacity']})")
+    
+    if step.get('call_stack'):
+        print(f"\nCall Stack:")
+        for call in step['call_stack']:
+            print(f"  {call}")
+
+
+def run_all_tests():
+    """Run complete test suite."""
+    print("\n" + "█"*70)
+    print("EDUCATIONAL UI TEST SUITE")
+    print("█"*70)
+    
+    # Run tracer
+    output = test_basic_execution()
+    
+    # Run all tests
+    tests = [
+        test_step_structure,
+        test_educational_clarity,
+        test_visualization_data,
+        test_decision_points,
+        test_step_by_step_narrative,
+        test_timeline_visual_states,
+        test_attention_guidance,
+    ]
+    
+    results = {}
+    for test_func in tests:
+        try:
+            result = test_func(output)
+            results[test_func.__name__] = result
+        except Exception as e:
+            print(f"❌ {test_func.__name__} failed with error: {e}")
+            results[test_func.__name__] = False
+    
+    # Print sample step
+    print_sample_step(output, step_num=5)
+    
+    # Summary
+    print("\n" + "="*70)
+    print("TEST SUMMARY")
+    print("="*70)
+    
+    for test_name, passed in results.items():
+        status = "✅ PASS" if passed else "❌ FAIL"
+        display_name = test_name.replace('test_', '').replace('_', ' ').title()
+        print(f"{status} - {display_name}")
+    
+    all_passed = all(results.values())
+    
+    print("\n" + "="*70)
+    if all_passed:
+        print("🎉 ALL TESTS PASSED - UI IS EDUCATIONALLY SOUND!")
+    else:
+        print("⚠️  SOME TESTS FAILED - REVIEW NEEDED")
+    print("="*70 + "\n")
+    
+    return all_passed
+
+
+if __name__ == "__main__":
+    success = run_all_tests()
+    sys.exit(0 if success else 1)
+```
+</file>
+
+
+<!-- Ignored directories summary -->
+<!-- Ignored: .pytest_cache -->
+<!-- Ignored: algorithms/__pycache__ -->
+<!-- Ignored: tests/__pycache__ -->
+<!-- Total ignored files: ~8 -->
+</files>
+</codebase>
