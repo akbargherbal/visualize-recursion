@@ -1,0 +1,22 @@
+{
+  "id": "interval-coverage",
+  "name": "Remove Covered Intervals",
+  "category": "Intervals",
+  "description": "Remove intervals that are completely covered by other intervals using a recursive greedy approach",
+  "difficulty": "Medium",
+  "complexity": {
+    "time": "O(n log n)",
+    "space": "O(n)"
+  },
+  "tags": ["intervals", "sorting", "greedy", "recursion"],
+  "visualization_type": "timeline",
+  "input_schema": {
+    "type": "intervals",
+    "fields": ["id", "start", "end", "color"]
+  },
+  "related_algorithms": ["interval-merge", "interval-intersection"],
+  "resources": {
+    "leetcode": "https://leetcode.com/problems/remove-covered-intervals/",
+    "article": "https://en.wikipedia.org/wiki/Interval_scheduling"
+  }
+}
