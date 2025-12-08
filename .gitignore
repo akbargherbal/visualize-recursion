@@ -33,3 +33,4 @@ tests/output/
 
 # Notebooks
 *.ipynb_checkpoints/
+node_modules
